@@ -10,8 +10,8 @@ android {
         applicationId = "com.textzixiao.studio"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.2.0"
     }
 
     buildTypes {
@@ -28,4 +28,5 @@ android {
 
 dependencies {
     implementation("androidx.activity:activity:1.9.0")
+    implementation("androidx.core:core:1.13.1")
 }

@@ -32,7 +32,37 @@
 Android 壳已处理：
 - WebView 文件选择器（字体/素材导入）
 - 页面内 blob 下载转存到系统“下载”目录（PNG/PSD/工程文件导出）
+- 应用内更新：下载 GitHub Releases 的 APK 并引导安装
 - 返回键回退页面历史
+
+## 发版流程（检查更新对接）
+
+工作室内的“设置 → 检查更新”和启动自检，读取仓库根目录的
+[`version.json`](./version.json)（经由 jsDelivr/raw.githubusercontent）：
+
+```json
+{
+  "version": "1.2.0",          // 与页面内 APP_VERSION / Android versionName 对齐
+  "versionCode": 2,            // 与 Android versionCode 对齐
+  "title": "v1.2.0 更新来啦",   // 弹窗标题
+  "notes": ["更新内容1", "..."],// 弹窗里的最新动态
+  "apkUrl": "https://github.com/shuting52/2026textzixiao/releases/download/v1.2.0/textzixiao-v1.2.0.apk",
+  "webUrl": "https://github.com/shuting52/2026textzixiao",
+  "releasesUrl": "https://github.com/shuting52/2026textzixiao/releases"
+}
+```
+
+发新版时按顺序做：
+
+1. 改 `version.json`（版本号、标题、更新日志）
+2. Android：在 Android Studio 里把 `app/build.gradle.kts` 的
+   `versionCode` / `versionName` 对齐，Build → Generate Signed APK，
+   把 APK 传到 GitHub → Releases → 新建 `vX.Y.Z` 版本（文件名与 `apkUrl` 一致）
+3. 网页：把新版页面同步到 `web/index.html` 与
+   `android/app/src/main/assets/studio/index.html`（两者保持一致），commit 并 push
+
+注意：APK 需要在你自己的 Android Studio 里打包上传，我这台机器没有 Android SDK，
+编不出 APK；`apkUrl` 指向的 Releases 文件不存在时，App 内更新会弹下载失败提示。
 
 ## 更新网页内容后同步到 Android
 

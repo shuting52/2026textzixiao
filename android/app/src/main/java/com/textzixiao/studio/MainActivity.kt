@@ -1,12 +1,18 @@
 package com.textzixiao.studio
 
 import android.annotation.SuppressLint
+import android.app.DownloadManager
+import android.content.BroadcastReceiver
 import android.content.ContentValues
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.provider.Settings
 import android.util.Base64
 import android.webkit.JavascriptInterface
 import android.webkit.ValueCallback
@@ -16,6 +22,7 @@ import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.FileProvider
 import java.io.File
 import java.io.FileOutputStream
 
@@ -27,6 +34,17 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var webView: WebView
     private var fileChooserCallback: ValueCallback<Array<Uri>>? = null
+    private var pendingApkDownloadId: Long = -1L
+
+    private val apkCompleteReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val id = intent?.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1L) ?: return
+            if (id == pendingApkDownloadId) {
+                pendingApkDownloadId = -1L
+                installDownloadedApk()
+            }
+        }
+    }
 
     private val pickFile =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -39,6 +57,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         webView = WebView(this)
         setContentView(webView)
+        val downloadFilter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(apkCompleteReceiver, downloadFilter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("DEPRECATION")
+            registerReceiver(apkCompleteReceiver, downloadFilter)
+        }
 
         with(webView.settings) {
             javaScriptEnabled = true
@@ -49,6 +74,7 @@ class MainActivity : ComponentActivity() {
             useWideViewPort = true
         }
         webView.addJavascriptInterface(DownloadBridge(), "AndroidBridge")
+        webView.addJavascriptInterface(UpdateBridge(), "AndroidUpdate")
         webView.webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
@@ -90,6 +116,86 @@ class MainActivity : ComponentActivity() {
     override fun onBackPressed() {
         if (::webView.isInitialized && webView.canGoBack()) webView.goBack()
         else super.onBackPressed()
+    }
+
+    override fun onDestroy() {
+        try {
+            unregisterReceiver(apkCompleteReceiver)
+        } catch (e: Exception) {
+            // ignore
+        }
+        super.onDestroy()
+    }
+
+    /** JS 桥：页面内更新弹窗调用，下载 GitHub Releases 的 APK 并引导安装 */
+    inner class UpdateBridge {
+        @JavascriptInterface
+        fun downloadApk(url: String) {
+            runOnUiThread {
+                try {
+                    val req = DownloadManager.Request(Uri.parse(url)).apply {
+                        setTitle("字体设计工作室更新")
+                        setDescription("正在下载新版本…")
+                        setNotificationVisibility(
+                            DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED
+                        )
+                        setDestinationInExternalFilesDir(
+                            this@MainActivity,
+                            Environment.DIRECTORY_DOWNLOADS,
+                            "textzixiao-update.apk"
+                        )
+                        setMimeType("application/vnd.android.package-archive")
+                    }
+                    val dm =
+                        getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+                    pendingApkDownloadId = dm.enqueue(req)
+                    Toast.makeText(
+                        this@MainActivity, "开始下载更新包…", Toast.LENGTH_SHORT
+                    ).show()
+                } catch (e: Exception) {
+                    Toast.makeText(
+                        this@MainActivity, "下载失败：${e.message}", Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+    }
+
+    private fun installDownloadedApk() {
+        try {
+            val apkFile = File(
+                getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS),
+                "textzixiao-update.apk"
+            )
+            if (!apkFile.exists()) {
+                Toast.makeText(this, "更新包未找到", Toast.LENGTH_SHORT).show()
+                return
+            }
+            // Android 8+ 需要“允许安装未知应用”授权
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                !packageManager.canRequestPackageInstalls()
+            ) {
+                Toast.makeText(this, "请允许安装未知应用后重试", Toast.LENGTH_LONG).show()
+                startActivity(
+                    Intent(
+                        Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                        Uri.parse("package:$packageName")
+                    )
+                )
+                return
+            }
+            val uri = FileProvider.getUriForFile(
+                this, "$packageName.fileprovider", apkFile
+            )
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/vnd.android.package-archive")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "安装失败：${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     /** JS 桥：把页面内的 blob 下载转为真实文件存到“下载”目录 */

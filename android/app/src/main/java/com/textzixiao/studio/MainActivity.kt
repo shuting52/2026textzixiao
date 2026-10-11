@@ -7,6 +7,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -25,6 +26,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
 import java.io.File
 import java.io.FileOutputStream
+import java.net.HttpURLConnection
+import java.net.URL
+import org.json.JSONArray
+import org.json.JSONObject
 
 /**
  * 字体设计工作室 · Android 壳
@@ -73,12 +78,15 @@ class MainActivity : ComponentActivity() {
             loadWithOverviewMode = true
             useWideViewPort = true
         }
+        val updateBridge = UpdateBridge()
         webView.addJavascriptInterface(DownloadBridge(), "AndroidBridge")
-        webView.addJavascriptInterface(UpdateBridge(), "AndroidUpdate")
+        webView.addJavascriptInterface(updateBridge, "AndroidUpdate")
         webView.webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 view?.evaluateJavascript(BLOB_HOOK_JS, null)
+                // 启动后静默检查一次更新，有新版才弹可爱风弹窗
+                view?.postDelayed({ updateBridge.checkUpdate(true) }, 2000)
             }
         }
         webView.webChromeClient = object : WebChromeClient() {
@@ -127,8 +135,90 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
     }
 
-    /** JS 桥：页面内更新弹窗调用，下载 GitHub Releases 的 APK 并引导安装 */
+    /** JS 桥：页面内更新弹窗调用，下载 GitHub Releases 的 APK 并引导安装；
+     *  版本检查也在原生层做（静态页不允许运行时拉取外部数据），结果通过 JS 回调弹可爱风弹窗 */
     inner class UpdateBridge {
+        private val versionUrl =
+            "https://raw.githubusercontent.com/shuting52/2026textzixiao/main/version.json"
+
+        /** silent=true 时（启动自检）无更新则不打扰用户 */
+        @JavascriptInterface
+        fun checkUpdate() = checkUpdate(false)
+
+        @JavascriptInterface
+        fun checkUpdate(silent: Boolean) {
+            Thread {
+                try {
+                    val conn = URL(versionUrl).openConnection() as HttpURLConnection
+                    conn.connectTimeout = 8000
+                    conn.readTimeout = 8000
+                    conn.connect()
+                    val body = conn.inputStream.bufferedReader().readText()
+                    conn.disconnect()
+                    val obj = JSONObject(body)
+                    val newVersion = obj.optString("version", "")
+                    val pinfo =
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            packageManager.getPackageInfo(
+                                packageName, PackageManager.PackageInfoFlags.of(0)
+                            )
+                        } else {
+                            @Suppress("DEPRECATION")
+                            packageManager.getPackageInfo(packageName, 0)
+                        }
+                    val current = pinfo.versionName ?: ""
+                    if (newVersion.isNotEmpty() && compareVersion(newVersion, current) > 0) {
+                        val info = JSONObject().apply {
+                            put("title", obj.optString("title", "发现新版本"))
+                            put("notes", obj.optJSONArray("notes") ?: JSONArray())
+                            put("currentVersion", current)
+                            put("newVersion", newVersion)
+                            put("apkUrl", obj.optString("apkUrl", ""))
+                            put(
+                                "releasesUrl",
+                                obj.optString(
+                                    "releasesUrl",
+                                    "https://github.com/shuting52/2026textzixiao/releases"
+                                )
+                            )
+                        }
+                        webView.post {
+                            webView.evaluateJavascript(
+                                "window.showUpdatePopup && window.showUpdatePopup($info)",
+                                null
+                            )
+                        }
+                    } else if (!silent) {
+                        runOnUiThread {
+                            Toast.makeText(this@MainActivity, "已是最新版本", Toast.LENGTH_SHORT)
+                                .show()
+                        }
+                    }
+                } catch (e: Exception) {
+                    if (!silent) {
+                        runOnUiThread {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "检查更新失败：${e.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                }
+            }.start()
+        }
+
+        private fun compareVersion(a: String, b: String): Int {
+            val pa = a.split(".")
+            val pb = b.split(".")
+            for (i in 0 until maxOf(pa.size, pb.size)) {
+                val x = pa.getOrNull(i)?.toIntOrNull() ?: 0
+                val y = pb.getOrNull(i)?.toIntOrNull() ?: 0
+                if (x != y) return x.compareTo(y)
+            }
+            return 0
+        }
+
         @JavascriptInterface
         fun downloadApk(url: String) {
             runOnUiThread {

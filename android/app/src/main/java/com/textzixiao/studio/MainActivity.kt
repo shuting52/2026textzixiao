@@ -189,9 +189,11 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     } else if (!silent) {
-                        runOnUiThread {
-                            Toast.makeText(this@MainActivity, "已是最新版本", Toast.LENGTH_SHORT)
-                                .show()
+                        webView.post {
+                            webView.evaluateJavascript(
+                                "window.showUpToDatePopup && window.showUpToDatePopup()",
+                                null
+                            )
                         }
                     }
                 } catch (e: Exception) {

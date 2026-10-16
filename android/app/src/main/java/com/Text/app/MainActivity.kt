@@ -85,8 +85,7 @@ class MainActivity : ComponentActivity() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 view?.evaluateJavascript(BLOB_HOOK_JS, null)
-                // 启动后静默检查一次更新，有新版才弹可爱风弹窗
-                view?.postDelayed({ updateBridge.checkUpdate(true) }, 2000)
+                // 更新检查改由网页端在初始化完成后主动触发（保证弹窗函数已就绪）
             }
         }
         webView.webChromeClient = object : WebChromeClient() {
@@ -144,6 +143,25 @@ class MainActivity : ComponentActivity() {
         /** silent=true 时（启动自检）无更新则不打扰用户 */
         @JavascriptInterface
         fun checkUpdate() = checkUpdate(false)
+
+        /** 供网页端显示真实版本号 */
+        @JavascriptInterface
+        fun getVersionName(): String {
+            return try {
+                val pinfo =
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        packageManager.getPackageInfo(
+                            packageName, PackageManager.PackageInfoFlags.of(0)
+                        )
+                    } else {
+                        @Suppress("DEPRECATION")
+                        packageManager.getPackageInfo(packageName, 0)
+                    }
+                pinfo.versionName ?: ""
+            } catch (e: Exception) {
+                ""
+            }
+        }
 
         @JavascriptInterface
         fun checkUpdate(silent: Boolean) {

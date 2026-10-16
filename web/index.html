@@ -233,7 +233,7 @@ function projectData(){return {format:'font-design-studio',version:5,savedAt:new
 function saveProject(ext){const name=($('#exportName').value||'字体设计作品').trim()||'字体设计作品';const blob=new Blob([JSON.stringify(projectData())],{type:'application/json'});downloadBlob(blob,`${name}.${ext}`);toast(ext==='plp'?'PLP 工程已保存':'JSON 源码已保存')}
 function safeColor(v,fallback){return typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v)?v:fallback}
 function safeText(v,fallback,max=5000){return typeof v==='string'?v.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,'').slice(0,max):fallback}
-const CURRENT_VERSION="1.0.6";
+const CURRENT_VERSION="1.0.7";
 const VERSION_URL='https://raw.githubusercontent.com/shuting52/2026textzixiao/main/version.json';
 const releasesFallback='https://github.com/shuting52/2026textzixiao/releases';
 let updatePayload={apkUrl:'',releasesUrl:releasesFallback};

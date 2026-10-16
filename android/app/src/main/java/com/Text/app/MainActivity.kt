@@ -40,6 +40,20 @@ class MainActivity : ComponentActivity() {
     private lateinit var webView: WebView
     private var fileChooserCallback: ValueCallback<Array<Uri>>? = null
     private var pendingApkDownloadId: Long = -1L
+    private var pendingInstallAfterPermission = false
+
+    override fun onResume() {
+        super.onResume()
+        // 从"允许安装未知应用"设置页返回后，自动继续安装
+        if (pendingInstallAfterPermission) {
+            pendingInstallAfterPermission = false
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
+                packageManager.canRequestPackageInstalls()
+            ) {
+                installDownloadedApk()
+            }
+        }
+    }
 
     private val apkCompleteReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -286,6 +300,7 @@ class MainActivity : ComponentActivity() {
                 !packageManager.canRequestPackageInstalls()
             ) {
                 Toast.makeText(this, "请允许安装未知应用后重试", Toast.LENGTH_LONG).show()
+                pendingInstallAfterPermission = true
                 startActivity(
                     Intent(
                         Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,

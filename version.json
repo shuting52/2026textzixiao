@@ -1,12 +1,11 @@
 {
-  "apkUrl": "https://github.com/shuting52/2026textzixiao/releases/download/v1.0.6/textzixiao-1.0.6.apk",
+  "apkUrl": "https://github.com/shuting52/2026textzixiao/releases/download/v1.0.7/textzixiao-1.0.7.apk",
   "notes": [
-    "底部面板改为 peek 模式：选特效时画布文字可见，点手柄展开/收起",
-    "磨砂液态胶囊主题强化：侧栏胶囊按钮、极光底色、液态高光"
+    "修复更新安装中断问题：去设置页开启未知来源权限后，返回自动继续安装，不再重复弹更新"
   ],
   "releasesUrl": "https://github.com/shuting52/2026textzixiao/releases",
-  "title": "v1.0.6 面板 peek 模式+主题强化",
-  "version": "1.0.6",
-  "versionCode": 7,
+  "title": "v1.0.7 更新安装流程修复",
+  "version": "1.0.7",
+  "versionCode": 8,
   "webUrl": "https://github.com/shuting52/2026textzixiao"
 }

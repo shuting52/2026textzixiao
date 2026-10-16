@@ -191,7 +191,7 @@ class MainActivity : ComponentActivity() {
                     } else if (!silent) {
                         webView.post {
                             webView.evaluateJavascript(
-                                "window.showUpToDatePopup && window.showUpToDatePopup()",
+                                "window.showUpToDatePopup && window.showUpToDatePopup(\"$current\")",
                                 null
                             )
                         }

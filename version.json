@@ -1,13 +1,13 @@
 {
-  "apkUrl": "https://github.com/shuting52/2026textzixiao/releases/download/v1.0.3/textzixiao-1.0.3.apk",
+  "apkUrl": "https://github.com/shuting52/2026textzixiao/releases/download/v1.0.4/textzixiao-1.0.4.apk",
   "notes": [
-    "图层面板改为右上角弹出卡片，不再遮挡画布",
-    "侧栏按钮点按切换：点一下展开，再点一下收回",
-    "移动端 tab 左侧竖栏"
+    "修复默认文字背后的粉色矩形（高光阴影 bug）",
+    "修复更新弹窗版本号显示（与 App 真实版本同步）",
+    "移动端：画布固定，双指缩放文字，长按删除文字"
   ],
   "releasesUrl": "https://github.com/shuting52/2026textzixiao/releases",
-  "title": "v1.0.3 图层右上弹出+侧栏切换",
-  "version": "1.0.3",
-  "versionCode": 4,
+  "title": "v1.0.4 手势与显示修复",
+  "version": "1.0.4",
+  "versionCode": 5,
   "webUrl": "https://github.com/shuting52/2026textzixiao"
 }

@@ -1,13 +1,13 @@
 {
-  "apkUrl": "https://github.com/shuting52/2026textzixiao/releases/download/v1.0.2/textzixiao-1.0.2.apk",
+  "apkUrl": "https://github.com/shuting52/2026textzixiao/releases/download/v1.0.3/textzixiao-1.0.3.apk",
   "notes": [
-    "移动端功能 tab 从底部横排改为左侧竖栏，画布空间更大",
-    "属性/工具面板弹出时自动避开左侧栏",
-    "文案库 1083 条、贴纸库、涂鸦、三维旋转、工程草稿"
+    "图层面板改为右上角弹出卡片，不再遮挡画布",
+    "侧栏按钮点按切换：点一下展开，再点一下收回",
+    "移动端 tab 左侧竖栏"
   ],
   "releasesUrl": "https://github.com/shuting52/2026textzixiao/releases",
-  "title": "v1.0.2 侧栏版",
-  "version": "1.0.2",
-  "versionCode": 3,
+  "title": "v1.0.3 图层右上弹出+侧栏切换",
+  "version": "1.0.3",
+  "versionCode": 4,
   "webUrl": "https://github.com/shuting52/2026textzixiao"
 }

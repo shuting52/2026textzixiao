@@ -1,13 +1,12 @@
 {
-  "apkUrl": "https://github.com/shuting52/2026textzixiao/releases/download/v1.0.5/textzixiao-1.0.5.apk",
+  "apkUrl": "https://github.com/shuting52/2026textzixiao/releases/download/v1.0.6/textzixiao-1.0.6.apk",
   "notes": [
-    "启动自动检查更新，有新版自动弹出更新提示，无需手动点",
-    "设置/关于页版本号与 App 真实版本同步",
-    "全新磨砂液态胶囊 UI 主题：毛玻璃面板 + 胶囊按钮"
+    "底部面板改为 peek 模式：选特效时画布文字可见，点手柄展开/收起",
+    "磨砂液态胶囊主题强化：侧栏胶囊按钮、极光底色、液态高光"
   ],
   "releasesUrl": "https://github.com/shuting52/2026textzixiao/releases",
-  "title": "v1.0.5 自动更新+磨砂液态胶囊主题",
-  "version": "1.0.5",
-  "versionCode": 6,
+  "title": "v1.0.6 面板 peek 模式+主题强化",
+  "version": "1.0.6",
+  "versionCode": 7,
   "webUrl": "https://github.com/shuting52/2026textzixiao"
 }
